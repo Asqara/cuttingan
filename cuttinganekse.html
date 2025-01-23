@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Cutter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .output {
+      margin-top: 20px;
+    }
+    .image-preview {
+      max-width: 100%;
+      height: auto;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Cutter</h1>
+  <p>Upload an image to cut into vertical and horizontal parts.</p>
+  <input type="file" id="imageUpload" accept="image/*">
+  <div class="output" id="output"></div>
+
+  <script>
+    document.getElementById("imageUpload").addEventListener("change", handleImageUpload);
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const width = img.width;
+        const height = img.height;
+
+        if (width !== 3450 || height % 1500 !== 0) {
+          alert("Image width must be 3450px, and height must be a multiple of 1500px.");
+          return;
+        }
+
+        const output = document.getElementById("output");
+        output.innerHTML = ""; // Clear previous outputs
+
+        const verticalCuts = height / 1500;
+        const horizontalWidth = 1200;
+
+        for (let v = 0; v < verticalCuts; v++) {
+          const yStart = v * 1500;
+
+          // Create 3 horizontal cuts: Centered, Left-justified, Right-justified
+          const cuts = [
+            { x: (width - horizontalWidth) / 2, y: yStart, label: "Centered" },
+            { x: 0, y: yStart, label: "Left Justified" },
+            { x: width - horizontalWidth, y: yStart, label: "Right Justified" }
+          ];
+
+          cuts.forEach((cut, index) => {
+            canvas.width = horizontalWidth;
+            canvas.height = 1500;
+            ctx.drawImage(img, cut.x, cut.y, horizontalWidth, 1500, 0, 0, horizontalWidth, 1500);
+
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL();
+            link.download = `cut_${v + 1}_${cut.label.replace(" ", "_")}.png`;
+            link.textContent = `Download Cut ${v + 1} (${cut.label})`;
+            link.style.display = "block";
+            output.appendChild(link);
+          });
+        }
+
+        // Preview the original image
+        const preview = document.createElement("img");
+        preview.src = img.src;
+        preview.alt = "Uploaded Image";
+        preview.className = "image-preview";
+        output.prepend(preview);
+      };
+    }
+  </script>
+</body>
+</html>
